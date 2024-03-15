@@ -14,18 +14,19 @@ from langchain_core.runnables import chain
 
 from langchain_core.runnables import RunnableParallel, RunnableMap
 
-from ai import llmloader
-from ai.clusterer import cluster
+import llmloader
+from clusterer import cluster
 
 # Constants
-datestr = lambda: time.strftime("%Y-%m-%d")
+datestr = lambda: time.strftime(r"%Y-%m-%d")
 config = {}
 with open("settings.yaml", "r") as f:
     config = yaml.safe_load(f)
 llmloader.set_opts(config)
 
-ollama_llm = llmloader.load_llm(provider="local")
+ollama_llm = llmloader.load_llm(provider="ollama")
 ollama_embed = llmloader.load_ollama_embed()
+
 
 def llm_to_json(input):
     to_json_prompt = PromptTemplate.from_template(
@@ -49,24 +50,25 @@ def llm_to_json(input):
 def fmt(messages: List[str]) -> str:
     return "---\n".join(messages)
 
+
 def summ(msgs):
-    summ_prompt = PromptTemplate.from_template("""Summarize the developers' comments and remarks concisely while preserving all the details, (@names) and important meaning.
-        (Input) Comments: 
+    summ_prompt = PromptTemplate.from_template(
+        """Summarize the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE paragraph. Discard unimportant greetings, formalities and thank-you's as needed.
+        Comments: 
         {input}
         """
     )
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
-    if len(msgs>5):
+    if len(msgs) > 5:
         texts = cluster(msgs, ollama_embed)
     else:
         texts = msgs
-    
-    summ_s = summ_er.batch(texts)
+    texts = [{"input": text} for text in texts]
+    summ_s = summ_er.batch(texts, config={"max_concurrency": 5})
     summ_s = fmt(summ_s)
-    summary = summ_er(summ_s)
+    summary = summ_er.invoke({"input": summ_s})
     return summary
-        
-    
+
 
 if __name__ == "__main__":
     repo_info = "internetarchive/openlibrary"
@@ -91,8 +93,8 @@ if __name__ == "__main__":
     with open("data/Comment.txt", "r") as f:
         sample_data = f.read()
     sample_data = eval(sample_data)
-    a = cluster(sample_data, llmloader.load_ollama_embed())
+    a = summ(sample_data)
     print(len(sample_data), len(a))
     # get_issue_comment("internetarchive", "openlibrary", 8623)
-    print(fmt(a))
+    print(a)
     pass
