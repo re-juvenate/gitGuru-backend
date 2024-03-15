@@ -37,14 +37,28 @@ to_json_prompt = PromptTemplate.from_template(
     Input: 
     {input}"""
 )
+json_corrector_prompt = PromptTemplate.from_template(
+    """Correct the given input's structure and ONLY output valid corrected JSON. Output ONLY the JSON in curly brackets. Shut up and do the work.
+    Input: 
+    {input}"""
+)
 
-ollama_llm = llmloader.load_llm(provider="ollama")
+
+
 
 def llm_to_json(input):
+    ollama_llm = llmloader.load_llm(provider="ollama")
+    jsoner = to_json_prompt | ollama_llm | StrOutputParser() 
+    json_corrector = json_corrector_prompt | ollama_llm | StrOutputParser()
     x = jsoner.invoke({"input": input})
-    x = json.loads(x)
+    x = json_corrector.invoke({"input": x})
+    # x = json.loads(x)
     return x
 
 
 if __name__ == "__main__":
+    a = llm_to_json(
+        """"""
+    )
+    print(a)
     pass

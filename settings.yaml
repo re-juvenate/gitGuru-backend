@@ -1,7 +1,7 @@
 llms: local, ollama
 
 local:
-  model_path: data/zephyr-7b-beta.Q4_K_M.gguf
+  model_path: data/phi-2-super.Q5_K_S.gguf
   max_new_tokens: 1536
   ctx_len: 3072
   gpu_layers: -1
@@ -12,3 +12,17 @@ ollama:
   max_new_tokens: 1024
   ctx_len: 2048
   temp: 0.65
+  num_gpu:
+  format:
+  headers:
+  mirostat: 1
+
+ollama2: 
+  model: dolphin-phi:2.7b-v2.6-q6_K
+  max_new_tokens: 1024
+  ctx_len: 2048
+  temp: 0.65
+  num_gpu:
+  format: json
+  headers:
+  mirostat:

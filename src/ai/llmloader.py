@@ -66,7 +66,6 @@ def load_ollama_llm():
         format=cfg["format"],
         headers=cfg["headers"],
         mirostat=cfg["mirostat"],
-        cache=True,
     )
     return llm
 
