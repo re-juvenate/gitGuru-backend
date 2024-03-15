@@ -65,7 +65,7 @@ def get_issue_comment(owner, repo, issue_number):
     return comment_list
 
 
-def get_repo_readme(owner, repo):
+def get_repo_readme(owner, repo, issue_number=0):
     global token
 
     headers = {
@@ -84,7 +84,7 @@ def get_repo_readme(owner, repo):
     return readme
 
 
-def get_repo_filetree(owner, repo):
+def get_repo_filetree(owner, repo, issue_number=0):
     global token
 
     headers = {
@@ -107,13 +107,31 @@ def get_repo_filetree(owner, repo):
     return req_path
 
 
+def get_repo_language(owner, repo, issue_number=0):
+    global token
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/languages"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return ["Failed to retrieve languages."]
+    
+    comment = response.json()
+    return comment
+
+
 def url_parser(url):
     url = url.split("/")
     owner = url[3]
     repo = url[4]
     issue_number = url[6]
-    return owner, repo, issue_number
+    return (owner, repo, issue_number)
 
-#print(get_issue_filetree("internetarchive","openlibrary",8623))
+#print(get_repo_language("internetarchive","openlibrary",8623))
 
 #print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
