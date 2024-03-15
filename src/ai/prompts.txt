@@ -1,0 +1,150 @@
+Step 1:
+ 
+I have a problem related to {input}. Could you brainstorm three distinct solutions? Please consider a variety of factors such as {perfect_factors}
+A:
+
+Step 2:
+
+For each of the three proposed solutions, evaluate their potential. Consider their pros and cons, initial effort needed, implementation difficulty, potential challenges, and the expected outcomes. Assign a probability of success and a confidence level to each option based on these factors
+
+{solutions}
+
+A:
+
+Step 3:
+
+For each solution, deepen the thought process. Generate potential scenarios, strategies for implementation, any necessary partnerships or resources, and how potential obstacles might be overcome. Also, consider any potential unexpected outcomes and how they might be handled.
+
+{review}
+
+A:
+---
+# Prompt
+
+Objective:
+Your objective is to create a sequential workflow based on the users query.
+
+Create a plan represented in JSON by only using the tools listed below. The workflow should be a JSON array containing only the sequence index, function name and input. A step in the workflow can receive the output from a previous step as input.
+
+Output example 1:
+{output_format}
+
+Tools: {tools}
+
+Only answer with the specified JSON format, no other text
+
+{input}
+---
+I’m going to ask you a question. I want you to decompose it into a series of subquestions. Each subquestion should be self-contained with all the information necessary to solve it.
+
+Make sure not to decompose more than necessary or have any trivial subquestions - you’ll be evaluated on the simplicity, conciseness, and correctness of your decompositions as well as your final answer. You should wrap each subquestion in <sub q></sub q> tags. After each subquestion, you should answer the subquestion and put your subanswer in <sub a></sub a> tags.
+
+ Once you have all the information you need to answer the question, output <FIN></FIN> tags.
+
+example:
+Question: What is Bitcoin?
+<sub q>What is the purpose of Bitcoin?</sub q>
+<sub a>Bitcoin serves as a decentralized digital currency.</sub a>
+<sub q>What does decentralized mean?</sub q>
+<sub a>Decentralized means it operates without a central authority or single administrator.</sub a>
+<FIN>Bitcoin is a decentralized digital currency that operates without a central authority.</FIN>
+
+Question: {question}
+---
+Assistant is a large language model trained by OpenAI.
+
+Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
+
+Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
+
+Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
+
+TOOLS:
+------
+
+Assistant has access to the following tools:
+
+{tools}
+
+To use a tool, please use the following format:
+
+```
+Thought: Do I need to use a tool? Yes
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+```
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+```
+Thought: Do I need to use a tool? No
+Final Answer: [your response here]
+```
+
+Begin!
+
+Previous conversation history:
+{chat_history}
+
+New input: {input}
+{agent_scratchpad}
+---
+Your goal is to create a daily todo based on given objective. I want you to decompose the objective into a series of subquestions. Then, search for the answers to discover more sub-objectives. Continue this until each objective becomes a specific, achieveable goal.
+
+You can use these tools to get answers to your queries:
+{tools}
+
+In order to use a tool, you can use <tool></tool> and <tool_input></tool_input> tags. You will then get back a response in the form <observation></observation>
+
+For example, if you have a tool called 'search' that could run a google search, in order to search for the weather in SF you would respond:
+
+<tool>search</tool><tool_input>weather in SF</tool_input>
+
+<observation>64 degrees</observation>
+
+Write your thoughts in the following format:
+THOUGHT: <next_goals>
+<li> [possible next step]
+[Search results]</li>
+<li> [possible next step]
+[Search results]</li>
+<li> [possible next step]
+[Search results]</li>
+</next_goals>
+
+Once you have all the information you need to complete the roadmap, write all the goals as a ordered list (<ol></ol>) enclosed in <final_answer></final_answer> tags.
+
+USER: {input}
+THOUGHT: {agent_scratchpad}
+---
+Create a sequential progress path or roadmap following the given step-by-step process to achieve the final goal of the user:
+
+Step 1: Begin with the primary goal as the root of the tree. 
+Step 2: Search the web and create a list of milestones in order to accomplishthe goal.
+Step 3: Break down each major milestone into subtasks or actions required to complete it. 
+Step 4: Search the web to find out more information about each milestone such as potential issues, time constraints etc
+
+Repeat the cycle taking a milestone as the main task until at least 5 milestones have been defined. Use concise and clear language to make the hierarchy easily understandable.
+---
+Make sure that thoughts and tools are valid, parseable XML and ignore garbage search results. Always search about goals using tools.
+Use the search tool to get more information about each subtask, and ask specific questions about expected time, potential problems, and other relevant details.
+---
+Step 1: Begin with the primary goal and define it as a specific, achievable and time-bound task.
+Step 3: Create a list of milestones or sub-goals required to complete the task.
+Step 4: Arrange the subtasks in chronological order.
+Step 5: Take the next subtask in order and search about the time constraints, problems and alternatives to doing it. Choose whether to include it or switch to an alternative task.
+Step 6: Repeat the cycle taking the next milestone until each subtask becomes a specific, achievable and time-bound goal. 
+---
+Follow the given process:
+
+1. Start with the given specific, achievable, and time-bound goal. If the goal does not meet these standards, enhance it using search results until it does.
+2. List subtasks required to reach the goal. You can do this by using tools to search "how to do/become/reach [goal]" and using the results.
+3. Organize subtasks in chronological order and output an intermediate roadmap enclosed in <intermediate_answer></intermediate_answer> tags.
+
+The next steps repeat themselves in a cycle:
+4. Iterate through subtasks, refining them into specific, achievable, and time-bound goals.
+5. For each subtask, investigate relevancy, prerequisites, time constraints, potential problems, and alternatives.
+6. If the subtask is vague or infeasible, remove it or replace it. More detailed subtasks are better.
+7. Regenerate the intermediate roadmap, adding the subtasks, including their details, and output it.
+---
