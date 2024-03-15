@@ -69,6 +69,7 @@ def load_ollama_llm():
     )
     return llm
 
+
 def load_ollama2_llm():
     cfg = config["ollama2"]
     temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
@@ -99,6 +100,7 @@ def load_llm(provider="local"):
         return load_ollama_llm()
     elif provider == "ollama2":
         return load_ollama2_llm()
+
 
 def load_all_llms():
     llms = config["llms"]
