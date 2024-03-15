@@ -1,8 +1,14 @@
-llm: fireworks
-model_path: data/zephyr-7b-beta.Q4_K_M.gguf
-model_max_new_tokens: 2000
-model_ctx_len: 4096
-model_gpu_layers: 27
-model_temp: 0.65
+llms: local, ollama
 
-searx_port: 7120
+local:
+  model_path: data/zephyr-7b-beta.Q4_K_M.gguf
+  max_new_tokens: 1536
+  ctx_len: 3072
+  gpu_layers: -1
+  temp: 0.65
+
+ollama: 
+  model: dolphin-phi:2.7b-v2.6-q6_K
+  max_new_tokens: 1024
+  ctx_len: 2048
+  temp: 0.65
