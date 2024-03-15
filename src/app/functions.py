@@ -65,7 +65,7 @@ def get_issue_comment(owner, repo, issue_number):
     return comment_list
 
 
-def get_issue_readme(owner, repo):
+def get_repo_readme(owner, repo):
     global token
 
     headers = {
@@ -83,3 +83,37 @@ def get_issue_readme(owner, repo):
     readme = base64.b64decode(readme_enc).decode("utf-8")
     return readme
 
+
+def get_repo_filetree(owner, repo):
+    global token
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/master?recursive=1"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return "Failed to retrieve issue body."
+    
+    filetree = response.json()["tree"]
+    req_path = []
+    for i in filetree:
+        if i["type"] != "blob":
+            req_path.append(i["path"])
+            
+    return req_path
+
+
+def url_parser(url):
+    url = url.split("/")
+    owner = url[3]
+    repo = url[4]
+    issue_number = url[6]
+    return owner, repo, issue_number
+
+#print(get_issue_filetree("internetarchive","openlibrary",8623))
+
+#print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))

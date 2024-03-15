@@ -12,18 +12,20 @@ router = APIRouter()
 
 DATA_STORE_PATH = "data/user_doc"
 
-
-@router.post("/dailymap/")
-async def get_daily_map(
-    goal: str,
-):
-    response = chains.run_task_decomp(goal)
-    response = chains.llm_to_json(response["output"])
+@router.post("/explain_issue/")
+async def get_issue_url(url: str):
+    data = functions.url_parser(url)
+    response = "Null"
     return response
 
+@router.post("/summ_msgs/")
+async def get_issue_url(url: str):
+    data = functions.url_parser(url)
+    response = "Null"
+    return response
 
-@router.post("/roadmap/")
-async def get_roadmap(goal: str, background: str, expectations: str):
-    response = chains.run_roadgen(goal, background, expectations)
-    response = chains.llm_to_json(response["output"])
+@router.post("/find_sols/")
+async def get_issue_url(url: str):
+    data = functions.url_parser(url)
+    response = "Null"
     return response
