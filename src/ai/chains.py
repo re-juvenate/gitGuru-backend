@@ -10,7 +10,7 @@ from langchain_core.prompts import (
 )
 from langchain_core.output_parsers import StrOutputParser
 
-import llmloader
+from ai import llmloader
 
 # Constants
 config = {}
