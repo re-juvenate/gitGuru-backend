@@ -74,7 +74,7 @@ def summ(msgs):
     return summary
 
 def explain(issue, related_text):
-    
+    pass
 
 if __name__ == "__main__":
     repo_info = "internetarchive/openlibrary"

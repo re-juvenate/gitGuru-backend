@@ -40,8 +40,7 @@ def get_issue_body(owner, repo, issue_number):
     if response.status_code != 200:
         return "Failed to retrieve issue body."
     
-    body = response.json()["body"]
-    return body
+    return response.json()["title"] + "\n" + response.json()["body"]
 
 
 def get_issue_comment(owner, repo, issue_number):
@@ -58,8 +57,11 @@ def get_issue_comment(owner, repo, issue_number):
     if response.status_code != 200:
         return ["Failed to retrieve issue comments"]
     
+    body = get_issue_body(owner, repo, issue_number)
+
     comment = response.json()
-    comment_list = []
+    comment_list = [body]
+    
     for i in comment:
         comment_list.append(i["body"])
     return comment_list
@@ -133,5 +135,5 @@ def url_parser(url):
     return (owner, repo, issue_number)
 
 # print(get_repo_language("internetarchive","openlibrary",8623))
-
+# print(get_issue_comment("coffebar", "neovim-project", 22))
 #print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
