@@ -70,15 +70,36 @@ def load_ollama_llm():
     )
     return llm
 
+def load_ollama2_llm():
+    cfg = config["ollama2"]
+    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
+    ctx_len = int(cfg["ctx_len"]) if cfg["ctx_len"] is not None else 2048
+    max_tokens = (
+        int(cfg["max_new_tokens"]) if cfg["max_new_tokens"] is not None else 1024
+    )
+    llm = Ollama(
+        model=cfg["model"],
+        num_ctx=ctx_len,
+        num_predict=max_tokens,
+        temperature=temp,
+        num_gpu=cfg["num_gpu"],
+        format=cfg["format"],
+        headers=cfg["headers"],
+        mirostat=cfg["mirostat"],
+        cache=True,
+    )
+    return llm
+
 
 def load_llm(provider="local"):
     if provider == "local":
         return load_local_llm()
     elif provider == "fireworks":
-        return load_local_llm()
+        return load_fireworks_llm()
     elif provider == "ollama":
-        return load_local_llm()
-
+        return load_ollama_llm()
+    elif provider == "ollama2":
+        return load_ollama2_llm()
 
 def load_all_llms():
     llms = config["llms"]
