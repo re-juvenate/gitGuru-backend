@@ -14,8 +14,8 @@ from langchain_core.runnables import chain
 
 from langchain_core.runnables import RunnableParallel, RunnableMap
 
-import llmloader
-from clusterer import cluster
+from ai import llmloader
+from ai.clusterer import cluster
 
 # Constants
 datestr = lambda: time.strftime("%Y-%m-%d")
@@ -56,9 +56,15 @@ def summ(msgs):
         """
     )
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
-    c_texts = cluster(msgs, ollama_embed)
-    summ_s = []
-    for text in c_texts:
+    if len(msgs>5):
+        texts = cluster(msgs, ollama_embed)
+    else:
+        texts = msgs
+    
+    summ_s = summ_er.batch(texts)
+    summ_s = fmt(summ_s)
+    summary = summ_er(summ_s)
+    return summary
         
     
 
