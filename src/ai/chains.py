@@ -53,12 +53,12 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE paragraph. Discard unimportant greetings, formalities and thank-you's if needed.
+        """Summarize the developers' comments and remarks clearly while preserving all the details, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
         """
     )
-    consistency_prompt = PromptTemplate.from_template("""Paraphrase the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE consistent, logical paragraph.
+    consistency_prompt = PromptTemplate.from_template("""Paraphrase the developers' comments and remarks clearly while preserving all the details, and important meaning into ONE consistent, logical paragraph.
         Comments:
         {input}
         """)
@@ -73,7 +73,8 @@ def summ(msgs):
     summary = summ_er.invoke({"input": summ_s})
     return summary
 
-
+def explain(issue, related_text):
+    
 
 if __name__ == "__main__":
     repo_info = "internetarchive/openlibrary"

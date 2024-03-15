@@ -132,6 +132,6 @@ def url_parser(url):
     issue_number = url[6]
     return (owner, repo, issue_number)
 
-#print(get_repo_language("internetarchive","openlibrary",8623))
+# print(get_repo_language("internetarchive","openlibrary",8623))
 
 #print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
