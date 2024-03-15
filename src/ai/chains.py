@@ -14,8 +14,8 @@ from langchain_core.runnables import chain
 
 from langchain_core.runnables import RunnableParallel, RunnableMap
 
-import llmloader
-from clusterer import cluster
+from ai import llmloader
+from ai.clusterer import cluster
 
 # Constants
 datestr = lambda: time.strftime(r"%Y-%m-%d")
@@ -53,11 +53,15 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE paragraph. Discard unimportant greetings, formalities and thank-you's as needed.
-        Comments: 
+        """Summarize the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE paragraph. Discard unimportant greetings, formalities and thank-you's if needed.
+        Dev. Comments: 
         {input}
         """
     )
+    consistency_prompt = PromptTemplate.from_template("""Paraphrase the developers' comments and remarks clearly while preserving all the details, (@names) and important meaning into ONE consistent, logical paragraph.
+        Comments:
+        {input}
+        """)
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
     if len(msgs) > 5:
         texts = cluster(msgs, ollama_embed)
@@ -68,6 +72,7 @@ def summ(msgs):
     summ_s = fmt(summ_s)
     summary = summ_er.invoke({"input": summ_s})
     return summary
+
 
 
 if __name__ == "__main__":

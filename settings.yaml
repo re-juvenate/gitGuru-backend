@@ -9,9 +9,9 @@ local:
 
 ollama: 
   model: dolphin-phi:2.7b-v2.6-q6_K
-  max_new_tokens: 1024
-  ctx_len: 2048
-  temp: 0.65
+  max_new_tokens: 1124
+  ctx_len: 2536
+  temp: 0.5
   num_gpu:
   format:
   headers:
