@@ -112,5 +112,5 @@ def load_all_llms():
     return loaded
 
 def load_ollama_embed():
-    embed = OllamaEmbbedings(model="nomic-text-embed")
+    embed = OllamaEmbeddings(model="nomic-embed-text")
     return embed
