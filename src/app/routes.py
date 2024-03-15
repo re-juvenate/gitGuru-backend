@@ -19,13 +19,14 @@ async def get_issue_url(url: str):
     return response
 
 @router.post("/summ_msgs/")
-async def get_issue_url(url: str):
+async def summarize_comments(url: str):
     data = functions.url_parser(url)
-    response = "Null"
+    response = functions.get_issue_comment()
+    # response = functions.get_issue_comment("internetarchive","openlibrary",8623)
     return response
 
 @router.post("/find_sols/")
-async def get_issue_url(url: str):
+async def find_solns(url: str):
     data = functions.url_parser(url)
     response = "Null"
     return response

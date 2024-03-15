@@ -3,6 +3,7 @@ import os
 from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_community.llms.fireworks import Fireworks
 from langchain_community.llms.ollama import Ollama
+from langchain_community.embeddings.ollama import OllamaEmbeddings
 
 config = {}
 
@@ -109,3 +110,7 @@ def load_all_llms():
     for provider in loaded:
         loaded[provider] = load_llm(provider)
     return loaded
+
+def load_ollama_embed():
+    embed = OllamaEmbbedings(model="nomic-text-embed")
+    return embed
