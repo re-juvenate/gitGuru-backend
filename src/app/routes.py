@@ -33,5 +33,11 @@ async def summarize_comments(repo: models.Repo):
 @router.post("/find_sols/")
 async def find_solns(repo: models.Repo):
     data = functions.url_parser(repo.url)
-    response = "Null"
-    return {"text": response}
+    title = functions.get_issue_title(*data)
+    full = functions.get_issue_body(*data)
+    langs = functions.get_repo_language(*data)
+    code = functions.get_issue_code(*data)
+    repo_path = data[0] + "/" + data[1]
+    response = chains.get_possible_solns(title, full, repo_path, langs, code)
+
+    return response

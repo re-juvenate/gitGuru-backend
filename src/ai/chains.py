@@ -60,12 +60,12 @@ def summ(msgs):
         """Summarize the developers' comments and remarks clearly while preserving all the details, jargon, (@usernames) and important meaning into a few extremely detailed points. Discard unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
-
+        
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase the developers' comments and remarks clearly while, and important meaning into ONE consistent, logical paragraph.
-        Comments:
+        """Paraphrase and format the developers' comments and remarks cleanly while, and important meaning into three short, logical paragraphs.
+        Conversations:
         {input}
 
         """
@@ -107,13 +107,14 @@ def explain_issue(issue, related_text):
         related_text
     )
     rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
-    retriever = rel_text_vecstore.as_retriever()
+    retriever = rel_text_vecstore.as_retriever(k=3)
 
     expl_prompt = PromptTemplate.from_template(
-        """Explain the given Github issue clearly without skipping any important details:
+        """Pleas explain the given Github issue clearly without skipping any important details:
         * Explain what the issue is clearly 
         * Explain the reason for the issue
-        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely
+        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely.
+        Use clean, consistent formatting to get your points across and be brief.
 
         Github Issue:
         {input}
@@ -135,32 +136,59 @@ def explain_issue(issue, related_text):
 def get_possible_solns(
     issue_title,
     issue_full,
+    repo_path,
+    repo_langs,
+    other_code,
 ):
-    search = SearxSearchWrapper(searx_host=config["searx_url"])
-    res = search.run(engines=["google", "github", "gitlab", "stackoverflow", "reddit"])
+    search = SearxSearchWrapper(searx_host=config["searx_url"], k=50)
+    res = search.results(
+        issue_title,
+        # engines=["google", "stackoverflow", "github", "gitlab", "reddit"],
+        num_results=20,
+    )
     print(res)
     # rel_text_docs = cluster_sums(rel_text_docs,)
     # retriever = rel_text_vecstore.as_retriever()
 
     expl_prompt = PromptTemplate.from_template(
-        """given Github issue clearly without skipping any important details:
-        * Explain what the issue is clearly 
-        * Explain the reason for the issue
-        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely
-
-        Github Issue:
-        {input}
-        
-        Github repository details(you can use this as context, but DO NOT write this part):
-        {related_text} 
         """
-    # )
+        You are a developer who wants to solve this issue: {issue}
+        in the repo {repo_path} using any of the following {langs}
+        Solve the issue using the given context.
+
+        Context: 
+        {search_results}
+
+        Only output a short guide or the code that will solve the issue along with a brief explanation, nothing else is needed.
+        """
+    )
     # expl_chain = (
     #     {"related_text": retriever, "input": RunnablePassthrough()}
     #     | expl_prompt
     #     | ds_llm
     #     | StrOutputParser()
     # )
+    return ""
+
+
+def review_code(
+    issue,
+    code,
+    suggestion,
+):
+    code = fmt(code)
+    codereview_prompt = PromptTemplate.from_template(
+        """You have to create a fix for a GitHub issue: {issue}
+        Others have written and tried the given code snippets below.
+        An expreienced colleague suggested to: {suggestion}
+        As a developer, select and rewrite the code that will solve the issue the best.
+
+        Code snippets:
+        {code}
+
+        Only output the code that fixes the issue.
+    """
+    )
     return ""
 
 

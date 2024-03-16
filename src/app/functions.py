@@ -26,7 +26,7 @@ if "GITHUB_API_KEY" not in os.environ:
 token = os.environ["GITHUB_API_KEY"]
 
 
-def get_issue_body_title(owner, repo, issue_number):
+def get_issue_title(owner, repo, issue_number):
     global token
 
     headers = {
