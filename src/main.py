@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -9,6 +9,7 @@ app = FastAPI()
 
 origins = [
     "https://github.com",
+    "http://github.com",
 ]
 
 app.add_middleware(
@@ -19,12 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def main():
-    return {"message": "Goodbye, world."}
-
-app = FastAPI()
 app.include_router(router)
 
 
