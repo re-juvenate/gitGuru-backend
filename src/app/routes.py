@@ -45,3 +45,18 @@ async def find_solns(repo: models.Repo):
     response = chains.expl_solutions(full, repo_path, response, code)
 
     return {"text": response}
+
+@router.post("/devision/")
+async def devision(repo: models.Repo):
+    data = functions.url_parser(repo.url)
+    title = functions.get_issue_title(*data)
+    full = functions.get_issue_body(*data)
+    langs = list(functions.get_repo_language(*data).keys())
+    files = functions.get_repo_filetree(*data)
+    
+    repo = data[0] + "/" + data[1]
+    ffr_opts = chains.ffr(repo, files, title, langs)
+    code = functions.get_repo_file(*data[:-2], ffr_opts["pfinder"].split()[0])
+    response = chains.progger(repo, title,code, **ffr_opts)
+
+    return {"text": response}

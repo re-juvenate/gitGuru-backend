@@ -14,7 +14,11 @@ from langchain_core.runnables import chain
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
 from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import TokenTextSplitter
+from langchain_text_splitters import (
+    TokenTextSplitter,
+    RecursiveCharacterTextSplitter,
+    Language,
+)
 from langchain_community.utilities.searx_search import SearxSearchWrapper
 
 from ai import llmloader
@@ -57,14 +61,14 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, technical terms, (@usernames) and important meaning into a few extremely detailed points. Remove unimportant greetings, formalities and thank-you's if needed.
+        """Summarize the developers' comments and remarks clearly while preserving all the specific details, technical terms, (@usernames) and important meaning into a few extremely detailed points. Remove unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
         
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase the developers' comments and remarks into a consistent flow. Preserve all details, technical terms and @usernames into a few concise, logically consistent paragraphs.
+        """Paraphrase the developers' comments and remarks into a consistent flow. Preserve all specifc details, technical terms and @usernames into a few concise, logically consistent paragraphs.
         Comments:
         {input}
 
@@ -102,7 +106,7 @@ def cluster_sums(docs, s=2):
     return summ_s
 
 
-def batch_sums(texts, s=2):
+def batch_sums(texts):
     summ_prompt = PromptTemplate.from_template(
         """Summarize the given information concisely while preserving all the important meaning, details, unknown terms, (@usernames) into a few detailed points. Remove any verbosity and unimportant greetings, formalities, and thank-you's as needed.
         Input:
@@ -116,6 +120,7 @@ def batch_sums(texts, s=2):
     summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
     return summ_s
 
+
 def conster(summ_s):
     consistency_prompt = PromptTemplate.from_template(
         """Paraphrase the given input into a consistent flow. Preserve all details, technical terms and jargon into a few concise, logically consistent paragraphs.
@@ -125,17 +130,17 @@ def conster(summ_s):
         """
     )
     const_er = consistency_prompt | ollama_llm | StrOutputParser()
-    summary = const_er.invoke({"input": summ_s})
+    summary = const_er.invoke({"input": fmt(summ_s)})
     return summary
 
+
 def explain_issue(issue, related_text):
-    rel_text_docs = TokenTextSplitter(chunk_size=500, chunk_overlap=80).split_text(
+    rel_text_docs = TokenTextSplitter(chunk_size=128, chunk_overlap=32).split_text(
         related_text
     )
-    rel_text = batch_sums(rel_text_docs)
+    rel_text = cluster_sums(rel_text_docs)
+    print(rel_text)
     rel_text = conster(rel_text)
-    # rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
-    # retriever = rel_text_vecstore.as_retriever(k=3)
 
     expl_prompt = PromptTemplate.from_template(
         """Please explain the given Github issue concisely in points. WITHOUT skipping any important details.
@@ -200,8 +205,8 @@ def code_solutions(
     """
     )
 
-    codereviewer = coder_prompt | ds_llm | StrOutputParser()
-    suggestions = codereviewer.invoke(
+    codeer = coder_prompt | ds_llm | StrOutputParser()
+    suggestions = codeer.invoke(
         {"repo": repo, "issue": issue, "langs": langs, "code": code, "info": results},
     )
     return suggestions
@@ -233,6 +238,114 @@ def expl_solutions(issue_full, repo, soln, code):
         }
     )
     return final_result
+
+
+def ffr(
+    repo,
+    files,
+    issue,
+    langs,
+):
+
+    langs = ", ".join(langs[:5])
+
+    p1 = PromptTemplate.from_template(
+        """
+    The program repository {repo} is coded in {langs}.
+    However, there is an issue in the code:
+    {issue}
+    Files in the repo:
+    {files}
+    What language do you think will the solution be in?
+    Choose one from [{alllangs}] (ONLY output a single word):
+    """
+    )
+
+    p2 = PromptTemplate.from_template(
+        """You are debugging an issue in {repo} programmed in {langs}.
+    Issue: {issue}
+    The following files are present: {files}
+    Which file may contain the relevant functions/code for solving this issue?
+    Copy the exact path of the required file and paste it.
+    """
+    )
+
+    p4 = PromptTemplate.from_template(
+        """
+    You are an expert linux sysadmin. Your current location is {repo}:
+    The following subdir structure is present:
+    {files}
+    Describe the structure in natural language. Make sure to mention filenames and paths and other details.
+    """
+    )
+    all_langs = ", ".join([e.value for e in Language])
+
+    lfinder = (
+        p1.partial(langs=langs, issue=issue, alllangs=all_langs)
+        | ds_llm
+        | StrOutputParser()
+    )
+    pfinder = p2.partial(langs=langs, issue=issue) | ds_llm | StrOutputParser()
+    desc_fs = p4 | ollama_llm | StrOutputParser()
+
+    fftool = RunnableParallel(lfinder=lfinder, pfinder=pfinder, desc_fs=desc_fs)
+    fdet = fftool.invoke({"repo": repo, "files": files})
+    return fdet
+
+
+def progger(repo, title, code, lfinder, pfinder, desc_fs):
+    # search = SearxSearchWrapper(searx_host=config["searx_url"])
+    # results = search.results(
+    #     title + ", ".join(langs[:5]),
+    #     engines=[
+    #         "stackoverflow",
+    #         "github",
+    #         "gitlab",
+    #         "reddit",
+    #     ],
+    #     num_results=8,
+    # )
+
+    # results = [res["title"] + " " + res["snippet"] for res in results]
+    # results = batch_sums(results)
+    # res = conster(results)
+    # results = fmt(results)
+    # code = fmt(code)
+    spl = RecursiveCharacterTextSplitter.get_separators_for_language(lfinder.split()[0])
+    spl = RecursiveCharacterTextSplitter(separators=spl)
+    code = spl.split_text(code)
+    code_vecstore = FAISS.from_texts(code, embedding=ollama_embed)
+    retriever = code_vecstore.as_retriever(k=4)
+    p3 = PromptTemplate.from_template(
+        """You need to fix an issue in {repo} (probably) in {path}
+        Issue: {issue}
+        File Structure: {desc_fs}
+        Code blocks: {code} 
+        Refactor the code to rectify this issue and review your code to ensure its validity.
+    """
+    )
+    refactorer = (
+        {
+            "code": retriever,
+            "repo": RunnablePassthrough(),
+            "path": RunnablePassthrough(),
+            "issue": RunnablePassthrough(),
+            "desc_fs": RunnablePassthrough(),
+        }
+        | p3
+        | ds_llm
+        | StrOutputParser()
+    )
+    # You can also see the separators used for a given language
+    ans = refactorer.invoke(
+        {
+            "desc_fs": desc_fs,
+            "path": pfinder,
+            "repo": repo,
+            "issue": title,
+        }
+    )
+    return ans
 
 
 if __name__ == "__main__":

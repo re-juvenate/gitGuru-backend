@@ -102,6 +102,23 @@ def get_repo_readme(owner, repo, issue_number=0):
     readme = base64.b64decode(readme_enc).decode("utf-8")
     return readme
 
+def get_repo_file(owner, repo, path=""):
+    global token
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return "Failed to retrieve file contents."
+    
+    contents = response.json()["content"]
+    return contents
+
 
 def get_repo_filetree(owner, repo, issue_number=0):
     global token
