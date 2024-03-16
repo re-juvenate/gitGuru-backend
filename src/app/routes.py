@@ -41,4 +41,4 @@ async def find_solns(repo: models.Repo):
     repo_path = data[0] + "/" + data[1]
     response = chains.get_possible_solns(title, full, repo_path, langs)
 
-    return response
+    return {"text": response}
