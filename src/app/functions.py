@@ -149,7 +149,7 @@ def url_parser(url):
 
 
 def md_parser(data):
-    ls1 = data.split("'''")
+    ls1 = data.split("```")
     code = []
     ct = 1
     for i in ls1:
@@ -161,5 +161,5 @@ def md_parser(data):
 
 
 # print(get_issue_code("internetarchive","openlibrary",8623))
-# print(get_issue_code("coffebar", "neovim-project", 22))
+print(get_issue_code("coffebar", "neovim-project", 22))
 # print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
