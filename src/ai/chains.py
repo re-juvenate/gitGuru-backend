@@ -84,7 +84,7 @@ def summ(msgs):
     return summary
 
 
-def cluster_sums(docs):
+def cluster_sums(docs, s=2):
     summ_prompt = PromptTemplate.from_template(
         """Summarize the given information concisely while preserving all the details, unknown terms, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities, verbosity and thank-you's as needed.
         Input:
@@ -93,8 +93,8 @@ def cluster_sums(docs):
         """
     )
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
-    if len(msgs) > 6:
-        texts = cluster(msgs, ollama_embed)
+    if len(docs) > 6:
+        texts = cluster(docs, ollama_embed, min_s=s)
     else:
         texts = msgs
     texts = [{"input": text} for text in texts]
@@ -141,16 +141,18 @@ def get_possible_solns(
     other_code,
 ):
     search = SearxSearchWrapper(searx_host=config["searx_url"], k=50)
-    res = search.results(
+    results = search.results(
         issue_title,
-        # engines=["google", "stackoverflow", "github", "gitlab", "reddit"],
+        engines=["google", "presearch","bing","stackoverflow", "github", "gitlab", "reddit"],
         num_results=20,
     )
-    print(res)
+    results = [res["title"]+" "+res["snippet"] for res in results]
+    results = cluster_sums(results, 2)
+    print(results)
     # rel_text_docs = cluster_sums(rel_text_docs,)
     # retriever = rel_text_vecstore.as_retriever()
 
-    expl_prompt = PromptTemplate.from_template(
+    sol_prompt = PromptTemplate.from_template(
         """
         You are a developer who wants to solve this issue: {issue}
         in the repo {repo_path} using any of the following {langs}
@@ -168,6 +170,9 @@ def get_possible_solns(
     #     | ds_llm
     #     | StrOutputParser()
     # )
+
+    sol_chain
+
     return ""
 
 
@@ -180,7 +185,7 @@ def review_code(
     codereview_prompt = PromptTemplate.from_template(
         """You have to create a fix for a GitHub issue: {issue}
         Others have written and tried the given code snippets below.
-        An expreienced colleague suggested to: {suggestion}
+        An experienced colleague suggested to: {suggestion}
         As a developer, select and rewrite the code that will solve the issue the best.
 
         Code snippets:
