@@ -100,6 +100,35 @@ def cluster_sums(docs):
 
 def explain_issue(issue, related_text):
     rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
+    rel_text_docs = cluster_sums("rel_")
+    rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
+    retriever = rel_text_vecstore.as_retriever()
+    
+    expl_prompt = PromptTemplate.from_template(
+        """Explain the given Github issue clearly without skipping any important details:
+        * Explain what the issue is clearly 
+        * Explain the reason for the issue
+        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely
+
+        Github Issue:
+        {input}
+        
+        Github repository details(you can use this as context, but DO NOT write this part):
+        {related_text} 
+        """
+    )
+    expl_chain = (
+    {"related_text": retriever, "input": RunnablePassthrough()}
+    | expl_prompt
+    | ds_llm
+    | StrOutputParser()
+    )
+    explanation = expl_chain.invoke({"input":issue})
+    return explanation
+
+def explain_issue(issue, related_text):
+    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
+    rel_text_docs = cluster_sums("rel_")
     rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
     retriever = rel_text_vecstore.as_retriever()
     

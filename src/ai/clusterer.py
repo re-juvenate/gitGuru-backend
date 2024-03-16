@@ -8,9 +8,11 @@ def embed(docs, embed_model):
     return embeds
 
 
-def cluster(texts, embedder, min_s=2, max_s=20):
+def cluster(texts, embedder, min_s=2, max_s=40):
     vecs = embed(texts, embedder)
-    hdb = hdbscan.HDBSCAN(min_samples=2, min_cluster_size=2, metric="l1").fit(vecs)
+    hdb = hdbscan.HDBSCAN(
+        min_samples=min_s, min_cluster_size=min_s, max_cluster_size=max_s, metric="l1"
+    ).fit(vecs)
     df = pd.DataFrame(
         {
             "text": [text for text in texts],
@@ -30,4 +32,3 @@ def cluster(texts, embedder, min_s=2, max_s=20):
         )
         cluster_texts.append(c_str)
     return cluster_texts
-
