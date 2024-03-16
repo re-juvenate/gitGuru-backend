@@ -10,6 +10,8 @@ app = FastAPI()
 origins = [
     "https://github.com",
     "http://github.com",
+    "http://localhost",
+    "https://zephyrus.tailafc78.ts.net",
 ]
 
 app.add_middleware(
