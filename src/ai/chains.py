@@ -18,7 +18,7 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_community.utilities.searx_search import SearxSearchWrapper
 
 from ai import llmloader
-from ai.clusterer import cluster, embed
+from ai.clusterer import cluster
 
 # Constants
 datestr = lambda: time.strftime(r"%Y-%m-%d")
@@ -64,7 +64,7 @@ def summ(msgs):
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase the developers' comments and remarks cleanly. Preserve all details, technical terms and @usernames into a few short, logically consistent paragraphs.
+        """Paraphrase the developers' comments and remarks into a consistent flow. Preserve all details, technical terms and @usernames into a few concise, logically consistent paragraphs.
         Comments:
         {input}
 
@@ -102,7 +102,7 @@ def cluster_sums(docs, s=2):
     return summ_s
 
 
-def batch_sums(docs, s=2):
+def batch_sums(texts, s=2):
     summ_prompt = PromptTemplate.from_template(
         """Summarize the given information concisely while preserving all the important meaning, details, unknown terms, (@usernames) into a few detailed points. Remove any verbosity and unimportant greetings, formalities, and thank-you's as needed.
         Input:
@@ -125,17 +125,18 @@ def explain_issue(issue, related_text):
     retriever = rel_text_vecstore.as_retriever(k=3)
 
     expl_prompt = PromptTemplate.from_template(
-        """Please explain the given Github issue clearly without skipping any important details:
-        * Explain what the issue is clearly 
-        * Explain the reason for the issue
-        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely.
-        Use clean, concise, consistent formatting to get your points across.
-
+        """Please explain the given Github issue concisely in points. WITHOUT skipping any important details.
         Github Issue:
         {input}
         
         Github repository details(you can use this as context, but DO NOT write this part):
         {related_text} 
+        
+        Requirements:
+        * Explain what the issue is clearly 
+        * Explain the reason for the issue
+        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely.
+        Tips: Use clean, concise, consistent formatting to get your points across.
         """
     )
     expl_chain = (
@@ -148,38 +149,17 @@ def explain_issue(issue, related_text):
     return explanation
 
 
-def review_code(
+def code_solutions(
+    repo,
     issue,
-    code,
-):
-
-    code = fmt(code)
-    codereview_prompt = PromptTemplate.from_template(
-        """You have to create a fix for a GitHub issue: {issue}
-        Others have written and tried the given code snippets below.
-        As a developer, review and rewrite their code based on how well it solves the issue.
-
-        Code snippets:
-        {code}
-
-        Only write about the code that fixes the issue. You can write multiple snippets only if they are good.
-    """
-    )
-
-    codereviewer = codereview_prompt | ds_llm | StrOutputParser()
-    suggestions = codereviewer.invoke({"issue": issue, "code": code})
-    return suggestions
-
-
-def get_possible_solns(
     issue_title,
-    issue_full,
-    repo_path,
-    repo_langs,
+    code,
+    langs,
 ):
+
     search = SearxSearchWrapper(searx_host=config["searx_url"])
     results = search.results(
-        issue_title,
+        issue_title+", ".join(langs[:5]),
         engines=[
             "google",
             "presearch",
@@ -191,30 +171,62 @@ def get_possible_solns(
         ],
         num_results=8,
     )
+
     results = [res["title"] + " " + res["snippet"] for res in results]
     results = batch_sums(results)
 
+    code = fmt(code)
+    results = fmt(results)
+    langs = ", ".join(langs[:5])
+
+    coder_prompt = PromptTemplate.from_template(
+        """You have to fix a GitHub issue on {repo}. Write clean, understandable code and be smart about length - the lower the better: 
+        {issue}
+        using {langs}.
+        Others have written and tried the given code snippets below in. Keeping that in mind, write a fix for the issue.
+
+        Code snippets:
+        {code}
+
+        Use the given info to guide your decisions:
+        {info}
+
+        Only write code that fixes the issue. Nothing else is needed.
+    """
+    )
+
+    codereviewer = coder_prompt | ds_llm | StrOutputParser()
+    suggestions = codereviewer.invoke(
+        {"repo": repo, "issue": issue, "langs": langs, "code": code, "info": results},
+    )
+    return suggestions
+
+
+def expl_solutions(issue_full, repo, soln, code):
+
     sol_prompt = PromptTemplate.from_template(
         """
-        You are a developer who wants to solve this issue in the repo {repo_path} in your free time: 
+        You are a developer who has solved this issue in the repo {repo} in your free time: 
         {issue}
-        using any of the following: {langs}
-        Solve the issue using the given context.
+        using the given code:
+        Your solution: 
+        {soln}
 
-        Context: 
-        {search_results}
+        Other possible solutions:
+        {code}
 
-        Only output a concise guide or a solution in code to the issue along with a brief explanation, nothing else is needed.
+        Write a one-line report on how you resolved the issue.
+        Only output a concise guide or a solution in code to the issue, nothing else is needed.
         """
     )
 
     sol_chain = sol_prompt | ds_llm | StrOutputParser()
     final_result = sol_chain.invoke(
         {
+            "repo": repo,
             "issue": issue_full,
-            "repo_path": repo_path,
-            "langs": repo_langs,
-            "search_results": fmt(results),
+            "soln": soln,
+            "code": fmt(code),
         }
     )
     return final_result

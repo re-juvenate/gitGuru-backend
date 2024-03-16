@@ -36,9 +36,12 @@ async def find_solns(repo: models.Repo):
     title = functions.get_issue_title(*data)
     full = functions.get_issue_body(*data)
     langs = list(functions.get_repo_language(*data).keys())
-    langs = ", ".join(langs[:5])
+
     code = functions.get_issue_code(*data)
     repo_path = data[0] + "/" + data[1]
-    response = chains.get_possible_solns(title, full, repo_path, langs)
+    response = chains.code_solutions(
+        repo_path, full, title, code, langs
+    )
+    response = chains.expl_solutions(full, repo_path, response, code)
 
     return {"text": response}
