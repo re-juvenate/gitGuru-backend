@@ -80,7 +80,7 @@ def get_issue_comment(owner, repo, issue_number):
     comment_list = [body]
     
     for i in comment:
-        comment_list.append("@"+i["user"]["login"] + " > " + i["body"])
+        comment_list.append("@"+i["user"]["login"] + "> " + i["body"])
     return comment_list
 
 

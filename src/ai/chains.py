@@ -57,14 +57,14 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, jargon, (@usernames) and important meaning into a few extremely detailed points. Discard unimportant greetings, formalities and thank-you's if needed.
+        """Summarize the developers' comments and remarks clearly while preserving all the details, technical terms, (@usernames) and important meaning into a few extremely detailed points. Remove unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
         
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase and format the developers' comments and remarks cleanly while, and important meaning into a few short, logical paragraphs.
+        """Paraphrase the developers' comments and remarks cleanly. Preserve all details, technical terms and @usernames into a few short, logically consistent paragraphs.
         Comments:
         {input}
 
@@ -73,7 +73,7 @@ def summ(msgs):
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
     const_er = consistency_prompt | ollama_llm | StrOutputParser()
 
-    if len(msgs) > 5:
+    if len(msgs) > 6:
         texts = cluster(msgs, ollama_embed)
     else:
         texts = msgs
@@ -86,7 +86,7 @@ def summ(msgs):
 
 def cluster_sums(docs, s=2):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the given information concisely while preserving all the details, unknown terms, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities, verbosity and thank-you's as needed.
+        """Summarize the given information concisely while preserving all the details, unknown terms, (@usernames) and important meaning into a few detailed points. Remove any verbosity and unimportant greetings, formalities and thank-you's as needed.
         Input:
         {input}
 
@@ -96,7 +96,22 @@ def cluster_sums(docs, s=2):
     if len(docs) > 6:
         texts = cluster(docs, ollama_embed, min_s=s)
     else:
-        texts = msgs
+        texts = docs
+    texts = [{"input": text} for text in texts]
+    summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
+    return summ_s
+
+
+def batch_sums(docs, s=2):
+    summ_prompt = PromptTemplate.from_template(
+        """Summarize the given information concisely while preserving all the important meaning, details, unknown terms, (@usernames) into a few detailed points. Remove any verbosity and unimportant greetings, formalities, and thank-you's as needed.
+        Input:
+        {input}
+
+        """
+    )
+    summ_er = summ_prompt | ollama_llm | StrOutputParser()
+
     texts = [{"input": text} for text in texts]
     summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
     return summ_s
@@ -114,7 +129,7 @@ def explain_issue(issue, related_text):
         * Explain what the issue is clearly 
         * Explain the reason for the issue
         * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely.
-        Use clean, consistent formatting to get your points across and be brief.
+        Use clean, concise, consistent formatting to get your points across.
 
         Github Issue:
         {input}
@@ -133,68 +148,76 @@ def explain_issue(issue, related_text):
     return explanation
 
 
+def review_code(
+    issue,
+    code,
+):
+
+    code = fmt(code)
+    codereview_prompt = PromptTemplate.from_template(
+        """You have to create a fix for a GitHub issue: {issue}
+        Others have written and tried the given code snippets below.
+        As a developer, review and rewrite their code based on how well it solves the issue.
+
+        Code snippets:
+        {code}
+
+        Only write about the code that fixes the issue. You can write multiple snippets only if they are good.
+    """
+    )
+
+    codereviewer = codereview_prompt | ds_llm | StrOutputParser()
+    suggestions = codereviewer.invoke({"issue": issue, "code": code})
+    return suggestions
+
+
 def get_possible_solns(
     issue_title,
     issue_full,
     repo_path,
     repo_langs,
-    other_code,
 ):
-    search = SearxSearchWrapper(searx_host=config["searx_url"], k=50)
+    search = SearxSearchWrapper(searx_host=config["searx_url"])
     results = search.results(
         issue_title,
-        engines=["google", "presearch","bing","stackoverflow", "github", "gitlab", "reddit"],
-        num_results=20,
+        engines=[
+            "google",
+            "presearch",
+            "bing",
+            "stackoverflow",
+            "github",
+            "gitlab",
+            "reddit",
+        ],
+        num_results=8,
     )
-    results = [res["title"]+" "+res["snippet"] for res in results]
-    results = cluster_sums(results, 2)
-    print(results)
-    # rel_text_docs = cluster_sums(rel_text_docs,)
-    # retriever = rel_text_vecstore.as_retriever()
+    results = [res["title"] + " " + res["snippet"] for res in results]
+    results = batch_sums(results)
 
     sol_prompt = PromptTemplate.from_template(
         """
-        You are a developer who wants to solve this issue: {issue}
-        in the repo {repo_path} using any of the following {langs}
+        You are a developer who wants to solve this issue in the repo {repo_path} in your free time: 
+        {issue}
+        using any of the following: {langs}
         Solve the issue using the given context.
 
         Context: 
         {search_results}
 
-        Only output a short guide or the code that will solve the issue along with a brief explanation, nothing else is needed.
+        Only output a concise guide or a solution in code to the issue along with a brief explanation, nothing else is needed.
         """
     )
-    # expl_chain = (
-    #     {"related_text": retriever, "input": RunnablePassthrough()}
-    #     | expl_prompt
-    #     | ds_llm
-    #     | StrOutputParser()
-    # )
 
-    sol_chain
-
-    return ""
-
-
-def review_code(
-    issue,
-    code,
-    suggestion,
-):
-    code = fmt(code)
-    codereview_prompt = PromptTemplate.from_template(
-        """You have to create a fix for a GitHub issue: {issue}
-        Others have written and tried the given code snippets below.
-        An experienced colleague suggested to: {suggestion}
-        As a developer, select and rewrite the code that will solve the issue the best.
-
-        Code snippets:
-        {code}
-
-        Only output the code that fixes the issue.
-    """
+    sol_chain = sol_prompt | ds_llm | StrOutputParser()
+    final_result = sol_chain.invoke(
+        {
+            "issue": issue_full,
+            "repo_path": repo_path,
+            "langs": repo_langs,
+            "search_results": fmt(results),
+        }
     )
-    return ""
+    return final_result
 
 
 if __name__ == "__main__":
