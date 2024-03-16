@@ -17,7 +17,6 @@ async def explain_issue(repo: models.Repo):
     data = functions.url_parser(repo.url)
     issue = functions.get_issue_body(*data)
     rel_data = functions.get_repo_readme(*data)
-    print(rel_data)
     response = chains.explain_issue(issue, rel_data)
     return response
 

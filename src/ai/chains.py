@@ -27,7 +27,7 @@ with open("settings.yaml", "r") as f:
 llmloader.set_opts(config)
 
 ollama_llm = llmloader.load_llm(provider="ollama")
-ds_llm = llmloader.load_deepseek_llm()
+ds_llm = llmloader.load_llm(provider="fireworks")
 ollama_embed = llmloader.load_ollama_embed()
 
 
@@ -100,7 +100,6 @@ def cluster_sums(docs):
 
 def explain_issue(issue, related_text):
     rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
-    print(rel_text_docs)
     rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
     retriever = rel_text_vecstore.as_retriever()
     
@@ -123,7 +122,7 @@ def explain_issue(issue, related_text):
     | ds_llm
     | StrOutputParser()
     )
-    explanation = expl_chain.invoke(issue)
+    explanation = expl_chain.invoke({"input":issue})
     return explanation
 
 if __name__ == "__main__":

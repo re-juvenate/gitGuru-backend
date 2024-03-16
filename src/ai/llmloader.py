@@ -4,7 +4,6 @@ from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_community.llms.fireworks import Fireworks
 from langchain_community.llms.ollama import Ollama
 from langchain_community.embeddings.ollama import OllamaEmbeddings
-from langchain_openai import OpenAI
 
 config = {}
 
@@ -37,12 +36,11 @@ def load_fireworks_llm():
         os.environ["FIREWORKS_API_KEY"] = getpass.getpass("Fireworks API Key:")
     cfg = config["fireworks"]
 
-    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
-    max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 1024
+    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.7
+    max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 3072
 
-    # Initialize a Fireworks model
     llm = Fireworks(
-        model="accounts/fireworks/models/mistral-7b-instruct-v0p2",
+        model=cfg["model"],
         base_url="https://api.fireworks.ai/inference/v1/completions",
         max_tokens=max_tokens,
         temperature=temp,
@@ -86,27 +84,10 @@ def load_ollama2_llm():
         format=cfg["format"],
         headers=cfg["headers"],
         mirostat=cfg["mirostat"],
-        cache=True,
     )
     return llm
 
 
-def load_deepseek_llm():
-    cfg = config["openailike"]
-    if "DEEPSEEK_API_KEY" not in os.environ:
-        os.environ["DEEPSEEK_API_KEY"] = getpass.getpass("Deepseek API Key:")
-    print(cfg["base_url"])
-    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
-    max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 1024
-
-    llm = OpenAI(
-        base_url=cfg["base_url"],
-        api_key=os.environ["DEEPSEEK_API_KEY"],
-        model=cfg["model"],
-        max_tokens=max_tokens,
-        temperature=temp,
-    )
-    return llm
 
 
 def load_llm(provider="local"):
@@ -118,8 +99,6 @@ def load_llm(provider="local"):
         return load_ollama_llm()
     elif provider == "ollama2":
         return load_ollama2_llm()
-    elif provider == "deepseek":
-        return load_deepseek_llm()
 
 
 def load_all_llms():

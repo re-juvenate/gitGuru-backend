@@ -7,6 +7,11 @@ local:
   gpu_layers: -1
   temp: 0.65
 
+fireworks:
+  model: accounts/fireworks/models/mistral-7b-instruct-v0p2
+  max_tokens: 2560
+  temp: 0.65
+
 ollama: 
   model: dolphin-phi:2.7b-v2.6-q6_K
   max_new_tokens: 1124
@@ -18,9 +23,9 @@ ollama:
   mirostat: 1
 
 ollama2: 
-  model: dolphin-phi:2.7b-v2.6-q6_K
-  max_new_tokens: 1024
-  ctx_len: 2048
+  model: mithun/magicoder:6.7B-S-DS-Q4_K_M 
+  max_new_tokens: 2048
+  ctx_len: 8192
   temp: 0.65
   num_gpu:
   format: json
