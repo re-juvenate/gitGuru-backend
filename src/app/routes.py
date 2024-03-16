@@ -33,5 +33,5 @@ async def summarize_comments(repo: models.Repo):
 @router.post("/find_sols/")
 async def find_solns(repo: models.Repo):
     data = functions.url_parser(repo.url)
-    response = "Null"
+    title = functions.ge
     return response

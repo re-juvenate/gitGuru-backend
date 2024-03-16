@@ -1,4 +1,4 @@
-llms: local, ollama
+llms: local, ollama, fireworks
 
 local:
   model_path: data/phi-2-super.Q5_K_S.gguf
@@ -12,7 +12,7 @@ fireworks:
   max_tokens: 1536
   temp: 0.65
 
-ollama: 
+ollama:
   model: dolphin-phi:2.7b-v2.6-q6_K
   max_new_tokens: 1124
   ctx_len: 2536
@@ -22,8 +22,8 @@ ollama:
   headers:
   mirostat: 1
 
-ollama2: 
-  model: mithun/magicoder:6.7B-S-DS-Q4_K_M 
+ollama2:
+  model: mithun/magicoder:6.7B-S-DS-Q4_K_M
   max_new_tokens: 2048
   ctx_len: 8192
   temp: 0.65
@@ -32,8 +32,4 @@ ollama2:
   headers:
   mirostat:
 
-openailike:
-  model: deepseek-coder
-  base_url: https://api.deepseek.com/v1
-  max_tokens: 2048
-  temp: 0.65
+searx_url: http://localhost:8080/

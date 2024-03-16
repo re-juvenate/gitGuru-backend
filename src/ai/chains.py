@@ -15,6 +15,7 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import TokenTextSplitter
+from langchain_community.utilities.searx_search import SearxSearchWrapper
 
 from ai import llmloader
 from ai.clusterer import cluster, embed
@@ -92,18 +93,22 @@ def cluster_sums(docs):
         """
     )
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
-    texts = cluster(docs, ollama_embed)
+    if len(msgs) > 6:
+        texts = cluster(msgs, ollama_embed)
+    else:
+        texts = msgs
     texts = [{"input": text} for text in texts]
     summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
     return summ_s
 
 
 def explain_issue(issue, related_text):
-    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
-    rel_text_docs = cluster_sums("rel_")
+    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(
+        related_text
+    )
     rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
     retriever = rel_text_vecstore.as_retriever()
-    
+
     expl_prompt = PromptTemplate.from_template(
         """Explain the given Github issue clearly without skipping any important details:
         * Explain what the issue is clearly 
@@ -118,22 +123,27 @@ def explain_issue(issue, related_text):
         """
     )
     expl_chain = (
-    {"related_text": retriever, "input": RunnablePassthrough()}
-    | expl_prompt
-    | ds_llm
-    | StrOutputParser()
+        {"related_text": retriever, "input": RunnablePassthrough()}
+        | expl_prompt
+        | ds_llm
+        | StrOutputParser()
     )
-    explanation = expl_chain.invoke({"input":issue})
+    explanation = expl_chain.invoke({"input": issue})
     return explanation
 
-def explain_issue(issue, related_text):
-    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
-    rel_text_docs = cluster_sums("rel_")
-    rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
-    retriever = rel_text_vecstore.as_retriever()
-    
+
+def get_possible_solns(
+    issue_title,
+    issue_full,
+):
+    search = SearxSearchWrapper(searx_host=config["searx_url"])
+    res = search.run(engines=["google", "github", "gitlab", "stackoverflow", "reddit"])
+    print(res)
+    # rel_text_docs = cluster_sums(rel_text_docs,)
+    # retriever = rel_text_vecstore.as_retriever()
+
     expl_prompt = PromptTemplate.from_template(
-        """Explain the given Github issue clearly without skipping any important details:
+        """given Github issue clearly without skipping any important details:
         * Explain what the issue is clearly 
         * Explain the reason for the issue
         * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely
@@ -144,15 +154,15 @@ def explain_issue(issue, related_text):
         Github repository details(you can use this as context, but DO NOT write this part):
         {related_text} 
         """
-    )
-    expl_chain = (
-    {"related_text": retriever, "input": RunnablePassthrough()}
-    | expl_prompt
-    | ds_llm
-    | StrOutputParser()
-    )
-    explanation = expl_chain.invoke({"input":issue})
-    return explanation
+    # )
+    # expl_chain = (
+    #     {"related_text": retriever, "input": RunnablePassthrough()}
+    #     | expl_prompt
+    #     | ds_llm
+    #     | StrOutputParser()
+    # )
+    return ""
+
 
 if __name__ == "__main__":
     repo_info = "internetarchive/openlibrary"
