@@ -127,6 +127,19 @@ def get_repo_language(owner, repo, issue_number=0):
     return comment
 
 
+def get_issue_code(owner, repo, issue_number):
+    global token
+
+    info = get_issue_comment(owner, repo, issue_number)
+    code = []
+    for i in info:
+        per_code = md_parser(i)
+        for j in per_code:
+            code.append(j)
+
+    return code
+
+
 def url_parser(url):
     url = url.split("/")
     owner = url[3]
@@ -134,6 +147,19 @@ def url_parser(url):
     issue_number = url[6]
     return (owner, repo, issue_number)
 
-# print(get_repo_language("internetarchive","openlibrary",8623))
-# print(get_issue_comment("coffebar", "neovim-project", 22))
-#print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
+
+def md_parser(data):
+    ls1 = data.split("'''")
+    code = []
+    ct = 1
+    for i in ls1:
+        if ct%2 != 1 and not(i.isspace()) and i != "":
+            code.append(i)
+        ct += 1
+        
+    return code
+
+
+# print(get_issue_code("internetarchive","openlibrary",8623))
+# print(get_issue_code("coffebar", "neovim-project", 22))
+# print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
