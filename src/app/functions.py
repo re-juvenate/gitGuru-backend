@@ -63,7 +63,7 @@ def get_issue_comment(owner, repo, issue_number):
     comment_list = [body]
     
     for i in comment:
-        comment_list.append(i["user"]["login"] + " > " + i["body"])
+        comment_list.append("@"+i["user"]["login"] + " > " + i["body"])
     return comment_list
 
 
@@ -161,5 +161,5 @@ def md_parser(data):
 
 
 # print(get_issue_code("internetarchive","openlibrary",8623))
-print(get_issue_code("coffebar", "neovim-project", 22))
+# print(get_issue_code("coffebar", "neovim-project", 22))
 # print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
