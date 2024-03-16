@@ -64,8 +64,8 @@ def summ(msgs):
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase and format the developers' comments and remarks cleanly while, and important meaning into three short, logical paragraphs.
-        Conversations:
+        """Paraphrase and format the developers' comments and remarks cleanly while, and important meaning into a few short, logical paragraphs.
+        Comments:
         {input}
 
         """
@@ -110,7 +110,7 @@ def explain_issue(issue, related_text):
     retriever = rel_text_vecstore.as_retriever(k=3)
 
     expl_prompt = PromptTemplate.from_template(
-        """Pleas explain the given Github issue clearly without skipping any important details:
+        """Please explain the given Github issue clearly without skipping any important details:
         * Explain what the issue is clearly 
         * Explain the reason for the issue
         * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely.
