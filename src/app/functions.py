@@ -177,6 +177,23 @@ def md_parser(data):
     return code
 
 
+def get_repo_file_info(owner, repo, path):
+    global token
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return "Failed to retrieve issue body title."
+    
+    return response.json()["title"]
+
+
 # print(get_issue_code("internetarchive","openlibrary",8623))
 # print(get_issue_code("coffebar", "neovim-project", 22))
 # print(url_parser("https://github.com/internetarchive/openlibrary/issues/8623"))
