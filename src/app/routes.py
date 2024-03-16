@@ -18,7 +18,7 @@ async def explain_issue(repo: models.Repo):
     issue = functions.get_issue_body(*data)
     rel_data = functions.get_repo_readme(*data)
     response = chains.explain_issue(issue, rel_data)
-    return response
+    return {"text": response}
 
 
 @router.post("/summ_msgs/")
@@ -27,11 +27,11 @@ async def summarize_comments(repo: models.Repo):
     response = functions.get_issue_comment(*data)
     response = chains.summ(response)
     # response = functions.get_issue_comment("internetarchive","openlibrary",8623)
-    return {"summary": response}
+    return {"text": response}
 
 
 @router.post("/find_sols/")
 async def find_solns(repo: models.Repo):
     data = functions.url_parser(repo.url)
-    title = functions.ge
-    return response
+    response = "Null"
+    return {"text": response}

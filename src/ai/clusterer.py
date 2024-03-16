@@ -8,7 +8,7 @@ def embed(docs, embed_model):
     return embeds
 
 
-def cluster(texts, embedder, min_s=2, max_s=40):
+def cluster(texts, embedder, min_s=2, max_s=1000):
     vecs = embed(texts, embedder)
     hdb = hdbscan.HDBSCAN(
         min_samples=min_s, min_cluster_size=min_s, max_cluster_size=max_s, metric="l1"
