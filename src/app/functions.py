@@ -26,6 +26,23 @@ if "GITHUB_API_KEY" not in os.environ:
 token = os.environ["GITHUB_API_KEY"]
 
 
+def get_issue_body_title(owner, repo, issue_number):
+    global token
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return "Failed to retrieve issue body title."
+    
+    return response.json()["title"]
+
+
 def get_issue_body(owner, repo, issue_number):
     global token
 
