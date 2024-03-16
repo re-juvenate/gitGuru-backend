@@ -56,14 +56,14 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, jargon, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities and thank-you's if needed.
+        """Summarize the developers' comments and remarks clearly while preserving all the details, jargon, (@usernames) and important meaning into a few extremely detailed points. Discard unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
 
         """
     )
     consistency_prompt = PromptTemplate.from_template(
-        """Paraphrase the developers' comments and remarks clearly while preserving all the details, and important meaning into ONE consistent, logical paragraph.
+        """Paraphrase the developers' comments and remarks clearly while, and important meaning into ONE consistent, logical paragraph.
         Comments:
         {input}
 
@@ -85,7 +85,7 @@ def summ(msgs):
 
 def cluster_sums(docs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the given information clearly while preserving all the details, unknown terms, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities, verboseness and thank-you's if needed.
+        """Summarize the given information concisely while preserving all the details, unknown terms, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities, verbosity and thank-you's as needed.
         Input:
         {input}
 
@@ -107,12 +107,12 @@ def explain_issue(issue, related_text):
         """Explain the given Github issue clearly without skipping any important details:
         * Explain what the issue is clearly 
         * Explain the reason for the issue
-        * Mention the issue poster's setup and important details mentioned in the issue:
+        * Mention some important details, such as the poster's setup, steps to reproduce etc. mentioned in the issue concisely
 
-        Github Issue (posted):
+        Github Issue:
         {input}
         
-        Github repository details(you can use this if needed):
+        Github repository details(you can use this as context, but DO NOT write this part):
         {related_text} 
         """
     )

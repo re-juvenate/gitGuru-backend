@@ -9,7 +9,7 @@ local:
 
 fireworks:
   model: accounts/fireworks/models/mistral-7b-instruct-v0p2
-  max_tokens: 2560
+  max_tokens: 1536
   temp: 0.65
 
 ollama: 
