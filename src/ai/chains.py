@@ -98,9 +98,9 @@ def cluster_sums(docs):
     return summ_s
 
 
-def explain(issue, related_text):
-    rel_text_docs = TokenTextSplitter(chunk_size=1024)
-    rel_text_docs = cluster_sums(rel_text_docs)
+def explain_issue(issue, related_text):
+    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(related_text)
+    print(rel_text_docs)
     rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
     retriever = rel_text_vecstore.as_retriever()
     
@@ -113,7 +113,7 @@ def explain(issue, related_text):
         Github Issue (posted):
         {input}
         
-        Github repository details:
+        Github repository details(you can use this if needed):
         {related_text} 
         """
     )

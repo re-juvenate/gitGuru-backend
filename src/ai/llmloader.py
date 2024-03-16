@@ -95,14 +95,14 @@ def load_deepseek_llm():
     cfg = config["openailike"]
     if "DEEPSEEK_API_KEY" not in os.environ:
         os.environ["DEEPSEEK_API_KEY"] = getpass.getpass("Deepseek API Key:")
-
+    print(cfg["base_url"])
     temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
     max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 1024
 
     llm = OpenAI(
-        model_name=cfg["model"],
-        api_key=os.environ["DEEPSEEK_API_KEY"],
         base_url=cfg["base_url"],
+        api_key=os.environ["DEEPSEEK_API_KEY"],
+        model=cfg["model"],
         max_tokens=max_tokens,
         temperature=temp,
     )
