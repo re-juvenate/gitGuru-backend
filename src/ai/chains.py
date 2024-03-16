@@ -116,22 +116,34 @@ def batch_sums(texts, s=2):
     summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
     return summ_s
 
+def conster(summ_s):
+    consistency_prompt = PromptTemplate.from_template(
+        """Paraphrase the given input into a consistent flow. Preserve all details, technical terms and jargon into a few concise, logically consistent paragraphs.
+        Comments:
+        {input}
+
+        """
+    )
+    const_er = consistency_prompt | ollama_llm | StrOutputParser()
+    summary = const_er.invoke({"input": summ_s})
+    return summary
 
 def explain_issue(issue, related_text):
-    rel_text_docs = TokenTextSplitter(chunk_size=512, chunk_overlap=20).split_text(
+    rel_text_docs = TokenTextSplitter(chunk_size=500, chunk_overlap=80).split_text(
         related_text
     )
-    rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
-    retriever = rel_text_vecstore.as_retriever(k=3)
+    rel_text = batch_sums(rel_text_docs)
+    rel_text = conster(rel_text)
+    # rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
+    # retriever = rel_text_vecstore.as_retriever(k=3)
 
     expl_prompt = PromptTemplate.from_template(
         """Please explain the given Github issue concisely in points. WITHOUT skipping any important details.
         Github Issue:
         {input}
-        
         Github repository details(you can use this as context, but DO NOT write this part):
         {related_text} 
-        
+
         Requirements:
         * Explain what the issue is clearly 
         * Explain the reason for the issue
@@ -139,13 +151,8 @@ def explain_issue(issue, related_text):
         Tips: Use clean, concise, consistent formatting to get your points across.
         """
     )
-    expl_chain = (
-        {"related_text": retriever, "input": RunnablePassthrough()}
-        | expl_prompt
-        | ds_llm
-        | StrOutputParser()
-    )
-    explanation = expl_chain.invoke({"input": issue})
+    expl_chain = expl_prompt | ds_llm | StrOutputParser()
+    explanation = expl_chain.invoke({"input": issue, "related_text": rel_text})
     return explanation
 
 
@@ -159,7 +166,7 @@ def code_solutions(
 
     search = SearxSearchWrapper(searx_host=config["searx_url"])
     results = search.results(
-        issue_title+", ".join(langs[:5]),
+        issue_title + ", ".join(langs[:5]),
         engines=[
             "google",
             "presearch",
@@ -180,18 +187,16 @@ def code_solutions(
     langs = ", ".join(langs[:5])
 
     coder_prompt = PromptTemplate.from_template(
-        """You have to fix a GitHub issue on {repo}. Write clean, understandable code and be smart about length - the lower the better: 
+        """You have to fix a GitHub issue on {repo}. Write clean, understandable code and be brief: 
         {issue}
         using {langs}.
-        Others have written and tried the given code snippets below in. Keeping that in mind, write a fix for the issue.
-
+        Others have written and tried the given code snippets below in. Keeping that in mind, program a fix for the issue.
         Code snippets:
         {code}
-
         Use the given info to guide your decisions:
         {info}
 
-        Only write code that fixes the issue. Nothing else is needed.
+        Only write a single block of code that fixes the issue. Nothing else is needed.
     """
     )
 
@@ -211,12 +216,10 @@ def expl_solutions(issue_full, repo, soln, code):
         using the given code:
         Your solution: 
         {soln}
-
         Other possible solutions:
         {code}
-
-        Write a one-line report on how you resolved the issue.
-        Only output a concise guide or a solution in code to the issue, nothing else is needed.
+        Write a solution/guide to the solution, nothing else is needed.
+        Write on how you resolved the issue in one line.
         """
     )
 
