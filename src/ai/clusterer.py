@@ -1,15 +1,16 @@
 import hdbscan
 import pandas as pd
+from langchain_community.vectorstores import FAISS
 
 
-def _embed(docs, embed_model):
+def embed(docs, embed_model):
     embeds = embed_model.embed_documents(docs)
     return embeds
 
 
-def cluster(texts, embedder):
-    vecs = _embed(texts, embedder)
-    hdb = hdbscan.HDBSCAN(min_samples=2, min_cluster_size=2, metric="l2").fit(vecs)
+def cluster(texts, embedder, min_s=2, max_s=20):
+    vecs = embed(texts, embedder)
+    hdb = hdbscan.HDBSCAN(min_samples=2, min_cluster_size=2, metric="l1").fit(vecs)
     df = pd.DataFrame(
         {
             "text": [text for text in texts],
@@ -29,3 +30,4 @@ def cluster(texts, embedder):
         )
         cluster_texts.append(c_str)
     return cluster_texts
+

@@ -26,3 +26,8 @@ ollama2:
   format: json
   headers:
   mirostat:
+
+openailike:
+  model: deepseek-coder
+  max_new_tokens: 2048
+  temp: 0.65

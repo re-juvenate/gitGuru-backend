@@ -4,6 +4,7 @@ from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_community.llms.fireworks import Fireworks
 from langchain_community.llms.ollama import Ollama
 from langchain_community.embeddings.ollama import OllamaEmbeddings
+from langchain_openai import OpenAI
 
 config = {}
 
@@ -36,10 +37,8 @@ def load_fireworks_llm():
         os.environ["FIREWORKS_API_KEY"] = getpass.getpass("Fireworks API Key:")
     cfg = config["fireworks"]
 
-    temp = float(cfg["model_temp"]) if cfg["model_temp"] is not None else 0.75
-    max_tokens = (
-        int(cfg["model_max_tokens"]) if cfg["model_max_tokens"] is not None else 1024
-    )
+    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
+    max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 1024
 
     # Initialize a Fireworks model
     llm = Fireworks(
@@ -92,6 +91,24 @@ def load_ollama2_llm():
     return llm
 
 
+def load_deepseek_llm():
+    cfg = config["openailike"]
+    if "DEEPSEEK_API_KEY" not in os.environ:
+        os.environ["DEEPSEEK_API_KEY"] = getpass.getpass("Deepseek API Key:")
+
+    temp = float(cfg["temp"]) if cfg["temp"] is not None else 0.75
+    max_tokens = int(cfg["max_tokens"]) if cfg["max_tokens"] is not None else 1024
+
+    llm = OpenAI(
+        model_name=cfg["model"],
+        api_key=os.environ["DEEPSEEK_API_KEY"],
+        base_url=cfg["base_url"],
+        max_tokens=max_tokens,
+        temperature=temp,
+    )
+    return llm
+
+
 def load_llm(provider="local"):
     if provider == "local":
         return load_local_llm()
@@ -101,6 +118,8 @@ def load_llm(provider="local"):
         return load_ollama_llm()
     elif provider == "ollama2":
         return load_ollama2_llm()
+    elif provider == "deepseek":
+        return load_deepseek_llm()
 
 
 def load_all_llms():
@@ -110,6 +129,7 @@ def load_all_llms():
     for provider in loaded:
         loaded[provider] = load_llm(provider)
     return loaded
+
 
 def load_ollama_embed():
     embed = OllamaEmbeddings(model="nomic-embed-text")

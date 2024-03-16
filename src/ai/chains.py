@@ -11,11 +11,13 @@ from langchain_core.prompts import (
 from langchain_core.output_parsers import StrOutputParser
 
 from langchain_core.runnables import chain
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
-from langchain_core.runnables import RunnableParallel, RunnableMap
+from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import TokenTextSplitter
 
 from ai import llmloader
-from ai.clusterer import cluster
+from ai.clusterer import cluster, embed
 
 # Constants
 datestr = lambda: time.strftime(r"%Y-%m-%d")
@@ -25,6 +27,7 @@ with open("settings.yaml", "r") as f:
 llmloader.set_opts(config)
 
 ollama_llm = llmloader.load_llm(provider="ollama")
+ds_llm = llmloader.load_deepseek_llm()
 ollama_embed = llmloader.load_ollama_embed()
 
 
@@ -53,28 +56,75 @@ def fmt(messages: List[str]) -> str:
 
 def summ(msgs):
     summ_prompt = PromptTemplate.from_template(
-        """Summarize the developers' comments and remarks clearly while preserving all the details, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities and thank-you's if needed.
+        """Summarize the developers' comments and remarks clearly while preserving all the details, jargon, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities and thank-you's if needed.
         Dev. Comments: 
         {input}
+
         """
     )
-    consistency_prompt = PromptTemplate.from_template("""Paraphrase the developers' comments and remarks clearly while preserving all the details, and important meaning into ONE consistent, logical paragraph.
+    consistency_prompt = PromptTemplate.from_template(
+        """Paraphrase the developers' comments and remarks clearly while preserving all the details, and important meaning into ONE consistent, logical paragraph.
         Comments:
         {input}
-        """)
+
+        """
+    )
     summ_er = summ_prompt | ollama_llm | StrOutputParser()
+    const_er = consistency_prompt | ollama_llm | StrOutputParser()
+
     if len(msgs) > 5:
         texts = cluster(msgs, ollama_embed)
     else:
         texts = msgs
     texts = [{"input": text} for text in texts]
-    summ_s = summ_er.batch(texts, config={"max_concurrency": 5})
+    summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
     summ_s = fmt(summ_s)
-    summary = summ_er.invoke({"input": summ_s})
+    summary = const_er.invoke({"input": summ_s})
     return summary
 
+
+def cluster_sums(docs):
+    summ_prompt = PromptTemplate.from_template(
+        """Summarize the given information clearly while preserving all the details, unknown terms, (@usernames) and important meaning into a few verbose points. Discard unimportant greetings, formalities, verboseness and thank-you's if needed.
+        Input:
+        {input}
+
+        """
+    )
+    summ_er = summ_prompt | ollama_llm | StrOutputParser()
+    texts = cluster(docs, ollama_embed)
+    texts = [{"input": text} for text in texts]
+    summ_s = summ_er.batch(texts, config={"max_concurrency": 6})
+    return summ_s
+
+
 def explain(issue, related_text):
-    pass
+    rel_text_docs = TokenTextSplitter(chunk_size=1024)
+    rel_text_docs = cluster_sums(rel_text_docs)
+    rel_text_vecstore = FAISS.from_texts(rel_text_docs, embedding=ollama_embed)
+    retriever = rel_text_vecstore.as_retriever()
+    
+    expl_prompt = PromptTemplate.from_template(
+        """Explain the given Github issue clearly without skipping any important details:
+        * Explain what the issue is clearly 
+        * Explain the reason for the issue
+        * Mention the issue poster's setup and important details mentioned in the issue:
+
+        Github Issue (posted):
+        {input}
+        
+        Github repository details:
+        {related_text} 
+        """
+    )
+    expl_chain = (
+    {"related_text": retriever, "input": RunnablePassthrough()}
+    | expl_prompt
+    | ds_llm
+    | StrOutputParser()
+    )
+    explanation = expl_chain.invoke(issue)
+    return explanation
 
 if __name__ == "__main__":
     repo_info = "internetarchive/openlibrary"
