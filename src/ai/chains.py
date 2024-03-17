@@ -264,10 +264,13 @@ def ffr(
     p2 = PromptTemplate.from_template(
         """You are debugging an issue in a repo {repo} programmed in {langs}.
     Issue: {issue}
+
     The following file paths are present in the repo: {files}
-    According to the issue the given files may contain the relevant functions/code for solving this issue?
-    Only output one file path, in ONE line, NOTHING ELSE.
-    """
+
+    Which the given files may contain the relevant functions/code for solving this issue?
+    Only output one file path, in ONE line,NO explanation, just a single file path, NOTHING ELSE.
+
+    File path: """
     )
 
     p4 = PromptTemplate.from_template(
@@ -311,7 +314,7 @@ def progger(repo, title, code, lfinder, pfinder, desc_fs):
     # res = conster(results)
     # results = fmt(results)
     # code = fmt(code)
-    spl = RecursiveCharacterTextSplitter.get_separators_for_language(lfinder.split()[0])
+    spl = RecursiveCharacterTextSplitter.get_separators_for_language(lfinder.strip().split()[0])
     spl = RecursiveCharacterTextSplitter(separators=spl)
     code = spl.split_text(code)
     code_vecstore = FAISS.from_texts(code, embedding=ollama_embed)
