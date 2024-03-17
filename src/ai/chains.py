@@ -262,11 +262,11 @@ def ffr(
     )
 
     p2 = PromptTemplate.from_template(
-        """You are debugging an issue in {repo} programmed in {langs}.
+        """You are debugging an issue in a repo {repo} programmed in {langs}.
     Issue: {issue}
     The following file paths are present in the repo: {files}
-    According to the issue the given files may contain the relevant functions/code for solving this issue? Select only ONE
-    Output only one file path in one word, NOTHING ELSE.
+    According to the issue the given files may contain the relevant functions/code for solving this issue?
+    Only output one file path, in ONE line, NOTHING ELSE.
     """
     )
 
