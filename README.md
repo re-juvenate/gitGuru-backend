@@ -1,6 +1,6 @@
-Git Guru
+Git Guru Backend
 =====
-# Backend
+![alt text](assets/logo.png)
 -----
 
 ## AI
