@@ -264,9 +264,9 @@ def ffr(
     p2 = PromptTemplate.from_template(
         """You are debugging an issue in {repo} programmed in {langs}.
     Issue: {issue}
-    The following files are present: {files}
+    The following files are present in the repo: {files}
     Which file may contain the relevant functions/code for solving this issue?
-    Copy the exact path of the required file and paste it.
+    Copy the exact file path of the required file and paste it, NOTHING ELSE.
     """
     )
 
