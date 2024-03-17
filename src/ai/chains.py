@@ -264,9 +264,9 @@ def ffr(
     p2 = PromptTemplate.from_template(
         """You are debugging an issue in {repo} programmed in {langs}.
     Issue: {issue}
-    The following files are present in the repo: {files}
-    Which file may contain the relevant functions/code for solving this issue? Select the most likely one
-    Copy the exact file path of ONLY ONE required file and paste it, NOTHING ELSE.
+    The following file paths are present in the repo: {files}
+    According to the issue the given files may contain the relevant functions/code for solving this issue? Select only ONE
+    Output only one file path in one word, NOTHING ELSE.
     """
     )
 
