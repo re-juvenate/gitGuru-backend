@@ -56,6 +56,7 @@ async def devision(repo: models.Repo):
     
     repo = data[0] + "/" + data[1]
     ffr_opts = chains.ffr(repo, files, title, langs)
+    print(ffr_opts["pfinder"])
     code = functions.get_repo_file(*data[:-2], ffr_opts["pfinder"])
     response = chains.progger(repo, title,code, **ffr_opts)
 

@@ -257,7 +257,7 @@ def ffr(
     Files in the repo:
     {files}
     What language do you think will the solution be in?
-    Choose one from [{alllangs}] (ONLY output a single word):
+    Choose one from [{alllangs}] (ONLY output a single word, NOTHING ELSE):
     """
     )
 
@@ -265,8 +265,8 @@ def ffr(
         """You are debugging an issue in {repo} programmed in {langs}.
     Issue: {issue}
     The following files are present in the repo: {files}
-    Which file may contain the relevant functions/code for solving this issue?
-    Copy the exact file path of the required file and paste it, NOTHING ELSE.
+    Which file may contain the relevant functions/code for solving this issue? Select the most likely one
+    Copy the exact file path of ONLY ONE required file and paste it, NOTHING ELSE.
     """
     )
 
